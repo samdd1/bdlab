@@ -1,0 +1,82 @@
+db.Company.insertMany([
+  {
+    "CompanyName": "Infosys",
+    "Number of Employees": 50000,
+    "Number of Department": 25,
+    "Roles in Industry": ["Developer", "Tester", "HR"],
+    "Profit (in Crores)": 5000,
+    "Rating": "A"
+  },
+  // Add more documents here...
+]);
+List all the Companies having the role "Developer" and show only the Company name and Rating as output:
+javascript
+Copy code
+db.Company.find({ "Roles in Industry": "Developer" }, { "CompanyName": 1, "Rating": 1 });
+List all the Companies with the number of departments greater than 40, profit greater than 4000 crores, and having a rating "A":
+javascript
+Copy code
+db.Company.find({
+  "Number of Department": { $gt: 40 },
+  "Profit (in Crores)": { $gt: 4000 },
+  "Rating": "A"
+});
+Update all the companies' ratings with a profit greater than 4000 to 'A':
+javascript
+Copy code
+db.Company.updateMany(
+  { "Profit (in Crores)": { $gt: 4000 } },
+  { $set: { "Rating": "A" } }
+);
+Count the number of companies with a rating "B" and having an employee count greater than 40000:
+javascript
+Copy code
+db.Company.count({
+  "Rating": "B",
+  "Number of Employees": { $gt: 40000 }
+});
+Delete a company that has a rating "C" and does not have the role HR:
+javascript
+Copy code
+db.Company.deleteOne({
+  "Rating": "C",
+  "Roles in Industry": { $ne: "HR" }
+});
+Update all the companies whose rating is "B" with a bonus profit of 10000:
+javascript
+Copy code
+db.Company.updateMany(
+  { "Rating": "B" },
+  { $inc: { "Profit (in Crores)": 10000 } }
+);
+Remove the Rating field for all the companies that have a rating "C":
+javascript
+Copy code
+db.Company.updateMany(
+  { "Rating": "C" },
+  { $unset: { "Rating": "" } }
+);
+Group all the Companies by their Rating and calculate the total number of employees using Aggregation:
+javascript
+Copy code
+db.Company.aggregate([
+  { $group: {
+      _id: "$Rating",
+      totalEmployees: { $sum: "$Number of Employees" }
+    }
+  }
+]);
+Apply the map-reduce operation to group all the Companies by their Rating and calculate the total number of employees:
+javascript
+Copy code
+var mapFunc = function() {
+  emit(this.Rating, this["Number of Employees"]);
+};
+
+var reduceFunc = function(key, values) {
+  return Array.sum(values);
+};
+
+db.Company.mapReduce(mapFunc, reduceFunc, { out: "CompanyEmployees" });
+
+db.CompanyEmployees.find();

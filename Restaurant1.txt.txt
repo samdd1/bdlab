@@ -1,0 +1,70 @@
+// 1. Populate the database with at least 15 documents.
+db.restaurants.insertMany([
+  {
+    "restaurant_id": "1",
+    "name": "Restaurant 1",
+    "cuisine": "Indian",
+    "address": {
+      "building": "123",
+      "street": "Main Street",
+      "coordinates": "12.3456, -78.9012",
+      "zip": "12345"
+    },
+    "town": "Bengaluru",
+    "grades": [
+      { "grade": "A", "score": 90 },
+      { "grade": "B", "score": 85 }
+    ]
+  },
+  // Add more documents here
+]);
+
+// 2. Write a MongoDB query to display the fields restaurant_id, name, town, and cuisine for all the documents in the collection restaurant.
+db.restaurants.find({}, { restaurant_id: 1, name: 1, town: 1, cuisine: 1 });
+
+// 3. Write a MongoDB query to display the fields restaurant_id, name, town, and cuisine, but exclude the field _id for all the documents in the collection restaurant.
+db.restaurants.find({}, { _id: 0, restaurant_id: 1, name: 1, town: 1, cuisine: 1 });
+
+// 4. Write a MongoDB query to display the entire restaurants which is in the town Bengaluru.
+db.restaurants.find({ town: "Bengaluru" });
+
+// 5. Write a MongoDB query to find the restaurants which do not prepare any cuisine of 'American' and achieved a score more than 70 and located in the longitude less than -65.754168.
+db.restaurants.find({
+  cuisine: { $ne: "American" },
+  "grades.score": { $gt: 70 },
+  "address.coordinates": { $lt: "-65.754168" }
+});
+
+// 6. Write a MongoDB query to find the restaurant Id, name, borough and cuisine for those restaurants which achieved a score which is not more than 5.
+db.restaurants.find(
+  { "grades.score": { $lte: 5 } },
+  { restaurant_id: 1, name: 1, borough: 1, cuisine: 1 }
+);
+
+// 7. Update the hotel by name “ARYA BHAVAN” and remove the grades filed from documents.
+db.restaurants.updateMany(
+  { name: "ARYA BHAVAN" },
+  { $unset: { grades: "" } }
+);
+
+// 8. Update the grade of all the Hotels to “A” whose score is more than 7.
+db.restaurants.updateMany(
+  { "grades.score": { $gt: 7 } },
+  { $set: { "grades.$.grade": "A" } }
+);
+
+// 9. Apply Map-reduce aggregation function to project the hotels by their names and find the list of cuisines each hotel offers.
+db.restaurants.mapReduce(
+  function() {
+    emit(this.name, this.cuisine);
+  },
+  function(key, values) {
+    return Array.from(new Set(values));
+  },
+  { out: "restaurants_cuisines" }
+);
+
+// 10. Group all the hotels by their towns and identify the hotels with the highest score in each town.
+db.restaurants.aggregate([
+  { $group: { _id: "$town", maxScore: { $max: "$grades.score" } } }
+]);

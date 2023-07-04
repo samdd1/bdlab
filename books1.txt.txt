@@ -1,0 +1,68 @@
+// 1. Populate the database with at least 15 documents.
+db.Books.insertMany([
+  {
+    "Name": "Understanding bioethics and the law",
+    "Book_id": "B01",
+    "Book_Author": "Schaller, Barry R",
+    "Publication_Year": 2008,
+    "Genre": "Philosophy",
+    "No_of_copies": 3,
+    "Review": ["Excellent"]
+  },
+  // Add more documents here
+]);
+
+// 2. List all the records having Publication_year in the range of 2000-2012
+db.Books.find({ "Publication_Year": { $gte: 2000, $lte: 2012 } });
+
+// 3. List all the books belonging to the Genre Fiction.
+db.Books.find({ "Genre": "Fiction" });
+
+// 4. Count the number of books whose review is "Average".
+db.Books.count({ "Review": "Average" });
+
+// 5. Find out all the books that have less than 3 copies and publication_year in the range of 1995-2003.
+db.Books.find({ "No_of_copies": { $lt: 3 }, "Publication_Year": { $gte: 1995, $lte: 2003 } });
+
+// 6. Delete a book from the database whose Book_id is B014
+db.Books.deleteOne({ "Book_id": "B014" });
+
+// 7. Update the review of the books to “Excellent” if they have more than 5 copies.
+db.Books.updateMany(
+  { "No_of_copies": { $gt: 5 } },
+  { $set: { "Review": ["Excellent"] } }
+);
+
+// 8. Delete the 11th book in the table and Update the book id of the next books to reflect this data manipulation operation.
+const bookToDelete = db.Books.findOne({}, { "Book_id": 1 }).skip(10); // Assuming 0-based indexing
+const deletedBookId = bookToDelete.Book_id;
+db.Books.deleteOne({ "Book_id": deletedBookId });
+db.Books.updateMany(
+  { "Book_id": { $gt: deletedBookId } },
+  { $inc: { "Book_id": -1 } }
+);
+
+// 9. Group all the books by their genre and identify the books with the highest review in each genre.
+db.Books.aggregate([
+  {
+    $group: {
+      _id: "$Genre",
+      highestReview: { $max: { $arrayElemAt: ["$Review", 0] } },
+      books: { $push: "$$ROOT" }
+    }
+  }
+]);
+
+// 10. Apply Map-reduce aggregation function to project the books by their names and find the list of genres.
+db.Books.mapReduce(
+  function() {
+    emit(this.Name, this.Genre);
+  },
+  function(key, values) {
+    return Array.from(new Set(values));
+  },
+  { out: "books_genres" }
+);
+
+// To view the result:
+db.books_genres.find();
