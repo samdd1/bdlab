@@ -1,0 +1,33 @@
+use movieDB
+db.createCollection("movie");
+db.movie.insertMany([{"Moviename":"cast Away","ticket_pri":500,"no of shows":5,"theaters":["palguni","chandrakala","vikram"],"genre":["horror","sci-fi","fantasy"],"rating":4},
+{"Moviename":"cast Away","ticket_pri":500,"no of shows":2,"theaters":["palguni","chandrakala","vikram"],"genre":["horror","sci-fi","fantasy"],"rating":2},
+{"Moviename":"Godzilla","ticket_pri":500,"no of shows":4,"theaters":["palguni","chandrakala","vikram"],"genre":["horror","sci-fi","fantasy"],"rating":3},
+{"Moviename":"Godzilla","ticket_pri":500,"no of shows":1,"theaters":["palguni","chandrakala","vikram"],"genre":["horror","sci-fi","fantasy"],"rating":3},
+{"Moviename":"cast Away","ticket_pri":500,"no of shows":3,"theaters":["palguni","chandrakala","vikram"],"genre":["thriller"],"rating":1},
+{"Moviename":"cast Away","ticket_pri":200,"no of shows":4,"theaters":["palguni","chandrakala","vikram"],"genre":["sci-fi","fantacy"],"rating":1}]);
+
+db.movie.find({"Moviename":"Godzilla"},{"theaters":1, "no of shows":1});
+
+db.movie.find({"rating":{$gte:1.5, $lte:5}});
+
+db.movie.find({rating:{$gt:4},ticket_pri:{$lt:400},genre:"sci-fi"});
+
+db.movie.countDocuments({ rating: { $gte: 1.5, $lte: 3 } });
+
+db.movie.aggregate([{$match: {rating: { $gte: 1.5, $lte: 3 }}},{$count: "movieCount"}]);
+
+db.movie.deleteMany({rating:{$lt:1.5},genre:{$ne:"thriller"}});
+
+db.movie.updateMany({ rating: { $gt: 3.5 } },{ $inc: { rating: 1 } });
+
+db.movie.updateMany({ genre: "thriller" },{ $addToSet: { genre: "psychological" } });
+
+db.movie.aggregate([{$group: {_id: "$Moviename","no of shows": { $sum: "$no of shows" }}}]);
+
+var mapc = function(){emit(this.Moviename, this.ticket_pri)};
+var redc = function(key , value){return Array.sum(value)};
+
+db.movie.mapReduce(mapc, redc,{out:"myresult"}) ;
+
+db.myresult.find();
